@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TechStore - E-commerce with Git Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      text-align: center;
+    }
+    
+    header h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    header p {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .main {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 30px;
+    }
+    
+    .section {
+      background: white;
+      border-radius: 10px;
+      padding: 25px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .section h2 {
+      color: #667eea;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+    
+    .product {
+      background: #f8f9fa;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    
+    .product h3 {
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .product-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .price {
+      color: #28a745;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    
+    .stock {
+      font-size: 12px;
+      color: #666;
+    }
+    
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #764ba2;
+    }
+    
+    .git-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .git-btn {
+      padding: 12px;
+      font-weight: bold;
+      font-size: 13px;
+    }
+    
+    .git-log {
+      background: #1e1e1e;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    
+    .log-entry {
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #333;
+    }
+    
+    .log-time {
+      color: #ffff00;
+      font-weight: bold;
+    }
+    
+    .log-cmd {
+      color: #00ff00;
+      margin: 5px 0;
+    }
+    
+    .log-desc {
+      color: #87ceeb;
+      font-size: 11px;
+    }
+    
+    .success {
+      border-left: 3px solid #28a745;
+    }
+    
+    .info {
+      border-left: 3px solid #17a2b8;
+    }
+    
+    .cart-count {
+      background: #28a745;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 5px;
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    @media (max-width: 1024px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+      
+      .git-buttons {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🛒 TechStore E-commerce</h1>
+      <p>Real-time Shopping Experience with Git Command Showcase</p>
+    </header>
+    
+    <div class="main">
+      <!-- Products Section -->
+      <div class="section">
+        <h2>📦 Products</h2>
+        <div id="products-list"></div>
+        <div class="cart-count">
+          <span id="cart-count">Total Added: 0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let cartTotal = 0;
+    let autoRefreshInterval;
+    
+    // Load products on page load
+    window.onload = () => {
+      loadProducts();
+      refreshGitLog();
+      autoRefreshInterval = setInterval(refreshGitLog, 2000);
+    };
+    
+    function loadProducts() {
+      fetch('/api/products')
+        .then(res => res.json())
+        .then(data => {
+          const list = document.getElementById('products-list');
+          list.innerHTML = data.map(p => `
+            <div class="product">
+              <h3>${p.name}</h3>
+              <div class="product-info">
+                <span class="price">$${p.price}</span>
+                <span class="stock">Stock: ${p.stock}</span>
+              </div>
+              <button onclick="addToCart(${p.id})" ${p.stock === 0 ? 'disabled' : ''}>
+                ${p.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+              </button>
+            </div>
+          `).join('');
+        });
+    }
+    
+    function addToCart(productId) {
+      fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            cartTotal++;
+            document.getElementById('cart-count').textContent = `Total Added: ${cartTotal}`;
+            loadProducts();
+            refreshGitLog();
+          }
+        });
+    }
+    
+    function executeGitCommand(cmd) {
+      if (cmd === 'status') {
+        fetch('/api/git/status', { method: 'POST' })
+          .then(res => res.json())
+          .then(refreshGitLog);
+      } else if (cmd === 'add') {
+        fetch('/api/git/push', { method: 'POST' })
+          .then(res => res.json())
+          .then(refreshGitLog);
+      } else if (cmd === 'commit') {
+        fetch('/api/git/commit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: 'Update inventory and products' })
+        })
+          .then(res => res.json())
+          .then(refreshGitLog);
+      } else if (cmd === 'push') {
+        fetch('/api/git/push', { method: 'POST' })
+          .then(res => res.json())
+          .then(refreshGitLog);
+      } else if (cmd === 'pull') {
+        fetch('/api/git/pull', { method: 'POST' })
+          .then(res => res.json())
+          .then(refreshGitLog);
+      }
+    }
+    
+    function refreshGitLog() {
+      fetch('/api/git/log')
+        .then(res => res.json())
+        .then(data => {
+          const logDiv = document.getElementById('git-log');
+          logDiv.innerHTML = data.map(entry => `
+            <div class="log-entry ${entry.type}">
+              <div class="log-time">${entry.timestamp}</div>
+              <div class="log-cmd">$ ${entry.command}</div>
+              <div class="log-desc">→ ${entry.description}</div>
+            </div>
+          `).join('');
+        });
+    }
+    
+    function clearLog() {
+      gitLog = [];
+      document.getElementById('git-log').innerHTML = '';
+    }
+  </script>
+</body>
+</html>
